@@ -21,5 +21,11 @@ make
 Run:
 
 ```
-make run origin=pasta_origem destiny=pasta_destino
+make run o=origin_dir d=destiny_dir
+```
+
+Check:
+
+```
+make check o=origin_dir d=destiny_dir
 ```

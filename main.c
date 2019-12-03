@@ -12,7 +12,7 @@
 #define COPYMODE        0644
 
 void go_through_all(char *dir_name_origin, char *path_destiny, int indent);
-void copy( char *name, char *path_origin, char *path_destiny);
+void compress(char *name, char *path_origin, char *path_destiny);
 
 DIR *dir_destiny;
 
@@ -49,7 +49,7 @@ void go_through_all(char *dir_name_origin, char *path_destiny, int indent)
     else // is file
     {
       // PASSO 3 - find . -type f -exec bzip2 "{}" \;
-      copy(entry_origin->d_name, dir_origin, path_destiny);
+      compress(entry_origin->d_name, dir_origin, path_destiny);
       // debug
         printf("%*sFILE: %s\n", indent, "", entry_origin->d_name);
       // end debug
@@ -58,11 +58,11 @@ void go_through_all(char *dir_name_origin, char *path_destiny, int indent)
   closedir(dir_origin);
 }
 
-void copy( char *name, char *path_origin, char *path_destiny)
+void compress(char *name, char *path_origin, char *path_destiny)
 {
   char file_destiny[1024];
   FILE *destiny;
-  snprintf(file_destiny, sizeof(file_destiny), "%s/%s", path_destiny, name);
+  snprintf(file_destiny, sizeof(file_destiny), "%s/%s.bz2", path_destiny, name);
   int origin = open(path_origin, O_RDONLY);
   destiny = fopen(file_destiny, "wb");
   int bzError;
