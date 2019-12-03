@@ -1,41 +1,55 @@
 #include <unistd.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-void list_all(const char *dir_name, int indent);
+void go_through_all(char *dir_name_origin, char *path, int indent);
 
-int main(int argc, char const *argv[])
+DIR *dir_destiny;
+
+int main(int argc, char *argv[])
 {
   // PASSO 1 - cp -ax DIR_ORIGEM DESTINO.bz2
   // PASSO 2 - cd DESTINO.bz2
-  list_all(argv[1], 0);
+  mkdir(argv[2], ACCESSPERMS);
+  go_through_all(argv[1], argv[2], 0);
   // PASSO 4 - cd ..
   // PASSO 5 - tar cf DESTINO.bz2.tar DESTINO.bz2
   // PASSO 6 - rm -rf DESTINO.bz2
   return 0;
 }
 
-void list_all(const char *dir_name, int indent)
+void go_through_all(char *dir_name_origin, char *path, int indent)
 {
-  DIR *dir;
-  struct dirent *entry;
+  DIR *dir_origin;
+  struct dirent *entry_origin;
 
-  if (!(dir = opendir(dir_name)))
+  if (!(dir_origin = opendir(dir_name_origin)))
     return;
 
-  while ((entry = readdir(dir)) != NULL) {
-    if (entry->d_type == DT_DIR) {
-      if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+  while ((entry_origin = readdir(dir_origin)) != NULL)
+  {
+    if (entry_origin->d_type == DT_DIR) // directory
+    {
+      if (strcmp(entry_origin->d_name, ".") == 0 || strcmp(entry_origin->d_name, "..") == 0)
         continue;
-      char path[1024];
-      snprintf(path, sizeof(path), "%s/%s", dir_name, entry->d_name);
-      printf("%*sDIR : %s\n", indent, "", entry->d_name);
-      list_all(path, indent + 2);
-    } else
-      printf("%*sFILE: %s\n", indent, "", entry->d_name);
+      char path_origin[1024], path_destiny[1024];
+      snprintf(path_origin, sizeof(path_origin), "%s/%s", dir_name_origin, entry_origin->d_name);
+      snprintf(path_destiny, sizeof(path_destiny), "%s/%s", path, entry_origin->d_name);
+      // debug
+      printf("%*sDIR : %s\n", indent, "", entry_origin->d_name);
+      // end debug
+      mkdir(path_destiny, ACCESSPERMS);
+      go_through_all(path_origin, path_destiny, indent + 2);
+    }
+    else // file
+      // debug
+      printf("%*sFILE: %s\n", indent, "", entry_origin->d_name);
+      // end debug
       // PASSO 3 - find . -type f -exec bzip2 "{}" \;
   }
-  closedir(dir);
+  closedir(dir_origin);
 }
