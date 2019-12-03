@@ -5,24 +5,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 
-void go_through_all(char *dir_name_origin, char *path, int indent);
+#define BUFFERSIZE      4096
+#define COPYMODE        0644
+
+void go_through_all(char *dir_name_origin, char *path_destiny, int indent);
+void copy( char *name, char *path_origin, char *path_destiny);
 
 DIR *dir_destiny;
 
 int main(int argc, char *argv[])
 {
-  // PASSO 1 - cp -ax DIR_ORIGEM DESTINO.bz2
-  // PASSO 2 - cd DESTINO.bz2
   mkdir(argv[2], ACCESSPERMS);
   go_through_all(argv[1], argv[2], 0);
-  // PASSO 4 - cd ..
-  // PASSO 5 - tar cf DESTINO.bz2.tar DESTINO.bz2
-  // PASSO 6 - rm -rf DESTINO.bz2
   return 0;
 }
 
-void go_through_all(char *dir_name_origin, char *path, int indent)
+void go_through_all(char *dir_name_origin, char *path_destiny, int indent)
 {
   DIR *dir_origin;
   struct dirent *entry_origin;
@@ -32,24 +32,41 @@ void go_through_all(char *dir_name_origin, char *path, int indent)
 
   while ((entry_origin = readdir(dir_origin)) != NULL)
   {
-    if (entry_origin->d_type == DT_DIR) // directory
+    char dir_origin[1024], dir_destiny[1024];
+    snprintf(dir_origin, sizeof(dir_origin), "%s/%s", dir_name_origin, entry_origin->d_name);
+    snprintf(dir_destiny, sizeof(dir_destiny), "%s/%s", path_destiny, entry_origin->d_name);
+    if (entry_origin->d_type == DT_DIR) // is directory
     {
       if (strcmp(entry_origin->d_name, ".") == 0 || strcmp(entry_origin->d_name, "..") == 0)
         continue;
-      char path_origin[1024], path_destiny[1024];
-      snprintf(path_origin, sizeof(path_origin), "%s/%s", dir_name_origin, entry_origin->d_name);
-      snprintf(path_destiny, sizeof(path_destiny), "%s/%s", path, entry_origin->d_name);
       // debug
-      printf("%*sDIR : %s\n", indent, "", entry_origin->d_name);
+        printf("%*sDIR : %s\n", indent, "", entry_origin->d_name);
       // end debug
-      mkdir(path_destiny, ACCESSPERMS);
-      go_through_all(path_origin, path_destiny, indent + 2);
+      mkdir(dir_destiny, ACCESSPERMS);
+      go_through_all(dir_origin, dir_destiny, indent + 2);
     }
-    else // file
-      // debug
-      printf("%*sFILE: %s\n", indent, "", entry_origin->d_name);
-      // end debug
+    else // is file
+    {
       // PASSO 3 - find . -type f -exec bzip2 "{}" \;
+      copy(entry_origin->d_name, dir_origin, path_destiny);
+      // debug
+        printf("%*sFILE: %s\n", indent, "", entry_origin->d_name);
+      // end debug
+    }
   }
   closedir(dir_origin);
+}
+
+void copy( char *name, char *path_origin, char *path_destiny)
+{
+  char file_destiny[1024];
+  FILE *origin, *destiny;
+  int ch;
+  snprintf(file_destiny, sizeof(file_destiny), "%s/%s", path_destiny, name);
+  origin = fopen(path_origin, "r");
+  destiny = fopen(file_destiny, "w");
+  while ((ch = fgetc(origin)) != EOF )
+    fputc(ch, destiny);
+  fclose(origin);
+  fclose(destiny);
 }
