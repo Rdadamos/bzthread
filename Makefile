@@ -9,4 +9,4 @@ run:
 
 check:
 	cd $(o); find . -type f -exec md5sum "{}" \; > /tmp/checksum
-	cd $(d); find . -type f -exec bunzip2 "{}" \;; md5sum -c /tmp/checksum
+	tar xf $(d).bz2.tar; cd $(d).bz2; find . -type f -exec bunzip2 "{}" \;; md5sum -c /tmp/checksum
