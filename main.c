@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <bzlib.h>
 
 #define BUFFERSIZE      4096
 #define COPYMODE        0644
@@ -60,13 +61,20 @@ void go_through_all(char *dir_name_origin, char *path_destiny, int indent)
 void copy( char *name, char *path_origin, char *path_destiny)
 {
   char file_destiny[1024];
-  FILE *origin, *destiny;
-  int ch;
+  FILE *destiny;
   snprintf(file_destiny, sizeof(file_destiny), "%s/%s", path_destiny, name);
-  origin = fopen(path_origin, "r");
-  destiny = fopen(file_destiny, "w");
-  while ((ch = fgetc(origin)) != EOF )
-    fputc(ch, destiny);
-  fclose(origin);
+  int origin = open(path_origin, O_RDONLY);
+  destiny = fopen(file_destiny, "wb");
+  int bzError;
+  const int BLOCK_MULTIPLIER = 7;
+  BZFILE *pBz = BZ2_bzWriteOpen(&bzError, destiny, BLOCK_MULTIPLIER, 0, 0);
+  const int BUF_SIZE = 10000;
+  char* buf[BUF_SIZE];
+  ssize_t bytesRead;
+  while((bytesRead = read(origin, buf, BUF_SIZE)) > 0) {
+      BZ2_bzWrite(&bzError, pBz, buf, bytesRead);
+  }
+  BZ2_bzWriteClose(&bzError, pBz, 0, NULL, NULL);
+  close(origin);
   fclose(destiny);
 }
