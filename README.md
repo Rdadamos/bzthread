@@ -21,7 +21,7 @@ make
 Run:
 
 ```
-make run o=origin_dir d=destiny_dir
+make run o=origin_dir d=destiny_dir.bz2.tar
 ```
 
 Check:
