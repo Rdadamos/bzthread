@@ -6,7 +6,12 @@ all:
 
 run:
 	./bzthread  $(o) $(d)
+	echo $(d) >> remove_list
 
 check:
 	cd $(o); find . -type f -exec md5sum "{}" \; > /tmp/checksum
-	tar xf $(d).bz2.tar; cd $(d); find . -type f -exec bunzip2 "{}" \;; md5sum -c /tmp/checksum
+	tar xf $(d).bz2.tar; echo $(d) >> remove_list; cd $(d); find . -type f -exec bunzip2 "{}" \;; md5sum -c /tmp/checksum
+
+clean:
+	xargs rm -r < remove_list
+	rm remove_list
